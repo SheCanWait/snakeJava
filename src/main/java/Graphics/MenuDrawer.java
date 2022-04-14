@@ -110,7 +110,7 @@ public class MenuDrawer {
                 }
 
                 if (x == 0 && y == menu.gameSize.ordinal() ||
-                    x == 1 && y == menu.difficulty.ordinal()) {
+                        x == 1 && y == menu.difficulty.ordinal()) {
 
                     backgroundColor = MenuColors.ChosenOptionBackground;
                     textColor = MenuColors.ChosenOptionText;

@@ -1,17 +1,20 @@
 package Game;
 
 import Game.Objects.Point;
+import Game.Objects.Snake;
 import Game.Objects.SnakeDirection;
 import Graphics.GameGraphicsDrawer;
 import Graphics.GraphicsDrawer;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-
+import java.util.List;
 import java.util.Random;
 
 
 public class Game implements Runnable {
+
+    private static final int ENEMY_SNAKE_POSITION_OFFSET = 2;
 
     private final GameGraphicsDrawer gameDrawer;
     private final GameState state;
@@ -20,27 +23,6 @@ public class Game implements Runnable {
     private final int y;
     private boolean exit = false;
     final Random random;
-
-
-    public Game(int gridCellsX, int gridCellsY, int frameRate) {
-
-        x = gridCellsX;
-        y = gridCellsY;
-        this.frameRate = frameRate;
-
-        state = new GameState();
-        int snakeHeadX = x / 2;
-        int snakeHeadY = y / 2;
-        if (x % 2 == 0) snakeHeadX--;
-        if (y % 2 == 0) snakeHeadY--;
-        state.snake.getHead().setLocation(snakeHeadX, snakeHeadY);
-
-        random = new Random(System.currentTimeMillis());
-        state.obstacle = getRandomPoint();
-        state.fruit = getRandomPoint();
-
-        gameDrawer = new GameGraphicsDrawer(x, y);
-    }
 
     public Game(int gridSize, int frameRate, GraphicsDrawer graphicsDrawer) {
 
@@ -53,6 +35,10 @@ public class Game implements Runnable {
         if (x % 2 == 0) snakeHeadX--;
         if (y % 2 == 0) snakeHeadY--;
         state.snake.getHead().setLocation(snakeHeadX, snakeHeadY);
+
+        int enemySnakeHeadX = snakeHeadX + ENEMY_SNAKE_POSITION_OFFSET;
+        int enemySnakeHeadY = snakeHeadY + ENEMY_SNAKE_POSITION_OFFSET;
+        state.enemySnake.getHead().setLocation(enemySnakeHeadX, enemySnakeHeadY);
 
         random = new Random(System.currentTimeMillis());
         state.obstacle = getRandomPoint();
@@ -94,6 +80,8 @@ public class Game implements Runnable {
         }
     }
 
+
+
     @Override
     public void run() {
 
@@ -115,6 +103,9 @@ public class Game implements Runnable {
                 System.out.println(e.getMessage());
             }
 
+            if (state.isStarted) {
+                calculateAndUpdateNextEnemyMove(state.snake.getBody(), state.enemySnake.getBody(), state.obstacle, state.fruit);
+            }
             update(state);
             gameDrawer.drawGame(state);
         }
@@ -130,32 +121,93 @@ public class Game implements Runnable {
         }
     }
 
-    public void update(GameState state) {
+//    class Node {
+//        List<Point> snakeBody, List<Point> enemySnakeBody, Point obstacle, Point fruit
+//    }
 
-        var nextHeadPosition = simulateMoveForward();
+    public void calculateAndUpdateNextEnemyMove(List<Point> snakeBody, List<Point> enemySnakeBody, Point obstacle, Point fruit) {
+        SnakeDirection randomSnakeDirection = getRandomSnakeDirection();
 
-        if (doesCollideWithAnything(nextHeadPosition)) {
-            state.isOver = true;
+
+
+
+
+
+
+
+
+        state.enemySnake.setNextMoveDirection(randomSnakeDirection);
+    }
+
+    private SnakeDirection getRandomSnakeDirection() {
+        int randomNumber = getRandomNumber(1, 5);
+        switch (randomNumber) {
+            case 2:
+                return SnakeDirection.Top;
+            case 3:
+                return SnakeDirection.Left;
+            case 4:
+                return SnakeDirection.Right;
+            default:
+                return SnakeDirection.Down;
         }
-        else if (state.fruit != null && nextHeadPosition.equals(state.fruit)) {
+    }
+
+    private int getRandomNumber(int min, int max) {
+        return (int) ((Math.random() * (max - min)) + min);
+    }
+
+        public void update(GameState state) { // enemy moves first, then player
+        var nextEnemySnakeHeadPosition = simulateMoveForward(state.enemySnake);
+
+        if (doesCollideWithAnything(nextEnemySnakeHeadPosition)) {
+            state.isOver = true;
+            state.isWin = true;
+        }
+
+        boolean shouldCreateNewFruitAndObstacle = false;
+
+        if (state.fruit != null && nextEnemySnakeHeadPosition.equals(state.fruit)) {
+            shouldCreateNewFruitAndObstacle = true;
+            state.enemySnake.moveAndExtend();
+            state.enemyScore++;
+        } else {
+            state.enemySnake.move();
+        }
+
+        var nextSnakeHeadPosition = simulateMoveForward(state.snake);
+        if (doesCollideWithAnything(nextSnakeHeadPosition)) {
+            state.isOver = true;
+            state.isWin = false;
+        }
+
+
+        if (state.fruit != null && nextSnakeHeadPosition.equals(state.fruit)) {
+            shouldCreateNewFruitAndObstacle = true;
             state.snake.moveAndExtend();
             state.score++;
+        } else {
+            state.snake.move();
+        }
 
-            state.obstacle = null;
+        if(shouldCreateNewFruitAndObstacle) {
             state.fruit = null;
+            state.obstacle = null;
 
             state.fruit = getRandomPoint();
-            if (state.score < x * y / 4 * 3) {
+            int minimumPointsForObstacleExistence = x * y / 4 * 3;
+            if ((state.score < minimumPointsForObstacleExistence) || (state.enemyScore < minimumPointsForObstacleExistence)) {
                 state.obstacle = getRandomPoint();
             }
-
-            if (state.score == (x * y) - 1) {
-
-                state.isWin = true;
-            }
         }
-        else {
-            state.snake.move();
+
+        if (state.score == (x * y) - 1) { // TODO why don't we "isOver = true" here?
+            state.isOver = true;
+            state.isWin = true;
+        }
+        if (state.enemyScore == (x * y) - 1) {
+            state.isOver = true;
+            state.isWin = false;
         }
     }
 
@@ -165,15 +217,16 @@ public class Game implements Runnable {
         int y = nextHeadPosition.y;
 
         return x < 0 || y < 0 || x >= this.x || y >= this.y // out of border
-            || state.obstacle != null && nextHeadPosition.equals(state.obstacle) // collision with obstacle
-            || simulatedDoesCollideWithSnake(nextHeadPosition); // collision with snake itself
+                || state.obstacle != null && nextHeadPosition.equals(state.obstacle) // collision with obstacle
+                || simulatedDoesCollideWithSnake(nextHeadPosition, state.snake)
+                || simulatedDoesCollideWithSnake(nextHeadPosition, state.enemySnake); // collision with enemy snake
     }
 
-    private boolean simulatedDoesCollideWithSnake(Point nextHeadPosition) {
+    private boolean simulatedDoesCollideWithSnake(Point nextHeadPosition, Snake snake) {
 
-        var lastBodyPart = state.snake.getBody().getLast();
+        var lastBodyPart = snake.getBody().getLast();
 
-        for (var snakePart: state.snake.getBody()) {
+        for (var snakePart: snake.getBody()) {
             if (snakePart != lastBodyPart && snakePart.equals(nextHeadPosition)) {
                 return true;
             }
@@ -182,10 +235,10 @@ public class Game implements Runnable {
         return false;
     }
 
-    private Point simulateMoveForward() {
+    private Point simulateMoveForward(Snake snake) {
 
-        var headClone = state.snake.getHead().clone();
-        state.snake.advancePoint(headClone);
+        var headClone = snake.getHead().clone();
+        snake.advancePoint(headClone);
         return headClone;
     }
 
@@ -196,16 +249,17 @@ public class Game implements Runnable {
         do {
             point.x = random.nextInt(x);
             point.y = random.nextInt(y);
-        } while (doesCollideWithSnake(point)
-            || (state.obstacle != null && point.equals(state.obstacle))
-            || (state.fruit != null && point.equals(state.fruit)));
+        } while (doesCollideWithSnake(point, state.snake)
+                || doesCollideWithSnake(point, state.enemySnake)
+                || (state.obstacle != null && point.equals(state.obstacle))
+                || (state.fruit != null && point.equals(state.fruit)));
 
         return point;
     }
 
-    private boolean doesCollideWithSnake(Point point) {
+    private boolean doesCollideWithSnake(Point point, Snake snake) {
 
-        for (var snakePart: state.snake.getBody()) {
+        for (var snakePart: snake.getBody()) {
             if (snakePart.equals(point)) {
                 return true;
             }

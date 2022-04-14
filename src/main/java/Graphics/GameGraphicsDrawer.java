@@ -110,15 +110,18 @@ public class GameGraphicsDrawer {
         }
 
         var snake = gameState.snake;
-        drawSnake(GameColors.Snake, snake, gameState.isOver);
+        drawSnake(gameState, GameColors.Snake, snake, gameState.isOver);
+
+        var enemySnake = gameState.enemySnake;
+        drawEnemySnake(gameState, GameColors.EnemySnake, enemySnake, gameState.isOver);
 
         drawScoreBar(gameState.score);
 
-        if (gameState.isOver) {
-            drawLoseMessage(gameState);
-        }
-        else if (gameState.isWin) {
+        if (gameState.isOver && gameState.isWin) {
             drawWinMessage(gameState);
+        }
+        if (gameState.isOver && !gameState.isWin) {
+            drawLoseMessage(gameState);
         }
     }
 
@@ -152,22 +155,47 @@ public class GameGraphicsDrawer {
                 calculatedCellWidth, calculatedCellHeight);
     }
 
-    private void drawSnake(Color color,Snake snake, boolean isGameOver) {
+    private void drawSnake(GameState state, Color color,Snake snake, boolean isGameOver) {
 
         Point previousBodyPart = null;
 
         for (var bodyPart : snake.getBody()) {
 
-            drawSnakePart(color, bodyPart, previousBodyPart, isGameOver);
+            drawSnakePart(state, color, bodyPart, previousBodyPart, isGameOver, false);
             previousBodyPart = bodyPart;
         }
     }
 
-    private void drawSnakePart(Color color, Point bodyPart, Point previousBodyPart, boolean isGameOver) {
+    private void drawEnemySnake(GameState state, Color color,Snake snake, boolean isGameOver) {
+
+        Point previousBodyPart = null;
+
+        for (var bodyPart : snake.getBody()) {
+
+            drawSnakePart(state, color, bodyPart, previousBodyPart, isGameOver, true);
+            previousBodyPart = bodyPart;
+        }
+    }
+
+    private void drawSnakePart(GameState state, Color color, Point bodyPart, Point previousBodyPart, boolean isGameOver, boolean isEnemy) {
 
         // case: bodyPart is head
         if (previousBodyPart == null) {
-            var headColor = isGameOver ? GameColors.DeadSnake : color;
+            Color headColor = null;
+            if(isGameOver && !isEnemy && !state.isWin) {
+                headColor = GameColors.DeadSnake;
+            }
+
+            if(isGameOver && isEnemy && state.isWin) {
+                headColor = GameColors.DeadSnake;
+            }
+
+            if(headColor == null) {
+                headColor = color;
+            }
+
+
+//            var headColor = isGameOver ? GameColors.DeadSnake : color;
             drawGridCell(headColor, bodyPart.x, bodyPart.y);
         }
         else {
