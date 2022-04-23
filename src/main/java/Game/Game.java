@@ -160,7 +160,7 @@ public class Game implements Runnable {
         public void update(GameState state) { // enemy moves first, then player
         var nextEnemySnakeHeadPosition = simulateMoveForward(state.enemySnake);
 
-        if (doesCollideWithAnything(nextEnemySnakeHeadPosition)) {
+        if (doesCollideWithAnything(nextEnemySnakeHeadPosition, true)) {
             state.isOver = true;
             state.isWin = true;
         }
@@ -176,7 +176,7 @@ public class Game implements Runnable {
         }
 
         var nextSnakeHeadPosition = simulateMoveForward(state.snake);
-        if (doesCollideWithAnything(nextSnakeHeadPosition)) {
+        if (doesCollideWithAnything(nextSnakeHeadPosition, false)) {
             state.isOver = true;
             state.isWin = false;
         }
@@ -211,28 +211,40 @@ public class Game implements Runnable {
         }
     }
 
-    private boolean doesCollideWithAnything(Point nextHeadPosition) {
+    private boolean doesCollideWithAnything(Point nextHeadPosition, boolean calculatingForEnemy) {
 
         int x = nextHeadPosition.x;
         int y = nextHeadPosition.y;
 
         return x < 0 || y < 0 || x >= this.x || y >= this.y // out of border
                 || state.obstacle != null && nextHeadPosition.equals(state.obstacle) // collision with obstacle
-                || simulatedDoesCollideWithSnake(nextHeadPosition, state.snake)
-                || simulatedDoesCollideWithSnake(nextHeadPosition, state.enemySnake); // collision with enemy snake
+                || simulatedDoesCollideWithSnake(nextHeadPosition, state.snake, calculatingForEnemy)
+                || simulatedDoesCollideWithSnake(nextHeadPosition, state.enemySnake, !calculatingForEnemy); // collision with enemy snake
     }
 
-    private boolean simulatedDoesCollideWithSnake(Point nextHeadPosition, Snake snake) {
+    private boolean simulatedDoesCollideWithSnake(Point nextHeadPosition, Snake snake, boolean calculatingVsEnemy) {
 
-        var lastBodyPart = snake.getBody().getLast();
+        if(calculatingVsEnemy) {
 
-        for (var snakePart: snake.getBody()) {
-            if (snakePart != lastBodyPart && snakePart.equals(nextHeadPosition)) {
-                return true;
+            for (var snakePart: snake.getBody()) {
+                if (snakePart.equals(nextHeadPosition)) {
+                    return true;
+                }
             }
-        }
+            return false;
 
-        return false;
+        } else {
+
+            var lastBodyPart = snake.getBody().getLast();
+
+            for (var snakePart: snake.getBody()) {
+                if (snakePart != lastBodyPart && snakePart.equals(nextHeadPosition)) {
+                    return true;
+                }
+            }
+            return false;
+
+        }
     }
 
     private Point simulateMoveForward(Snake snake) {
