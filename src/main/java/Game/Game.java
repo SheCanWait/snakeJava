@@ -121,10 +121,6 @@ public class Game implements Runnable {
         }
     }
 
-//    class Node {
-//        List<Point> snakeBody, List<Point> enemySnakeBody, Point obstacle, Point fruit
-//    }
-
     public void calculateAndUpdateNextEnemyMove(List<Point> snakeBody, List<Point> enemySnakeBody, Point obstacle, Point fruit) {
         SnakeDirection randomSnakeDirection = getRandomSnakeDirection();
 
