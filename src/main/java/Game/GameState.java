@@ -31,4 +31,40 @@ public class GameState {
         isOver = false;
         isStarted = false;
     }
+
+    public boolean doesCollideWithAnything(Point nextHeadPosition, boolean calculatingForEnemy, int x, int y) {
+
+        int x_ = nextHeadPosition.x;
+        int y_ = nextHeadPosition.y;
+
+        return x_ < 0 || y_ < 0 || x_ >= x || y_ >= y // out of border
+                || this.obstacle != null && nextHeadPosition.equals(this.obstacle) // collision with obstacle
+                || simulatedDoesCollideWithSnake(nextHeadPosition, this.snake, calculatingForEnemy)
+                || simulatedDoesCollideWithSnake(nextHeadPosition, this.enemySnake, !calculatingForEnemy); // collision with enemy snake
+    }
+
+    private boolean simulatedDoesCollideWithSnake(Point nextHeadPosition, Snake snake, boolean calculatingVsEnemy) {
+
+        if(calculatingVsEnemy) {
+
+            for (var snakePart: snake.getBody()) {
+                if (snakePart.equals(nextHeadPosition)) {
+                    return true;
+                }
+            }
+            return false;
+
+        } else {
+
+            var lastBodyPart = snake.getBody().getLast();
+
+            for (var snakePart: snake.getBody()) {
+                if (snakePart != lastBodyPart && snakePart.equals(nextHeadPosition)) {
+                    return true;
+                }
+            }
+            return false;
+
+        }
+    }
 }
