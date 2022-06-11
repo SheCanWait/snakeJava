@@ -8,8 +8,12 @@ import Graphics.GraphicsDrawer;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+
+import static Game.Algorithms.PathFinder.getPath;
 
 
 public class Game implements Runnable {
@@ -41,7 +45,6 @@ public class Game implements Runnable {
         state.enemySnake.getHead().setLocation(enemySnakeHeadX, enemySnakeHeadY);
 
         random = new Random(System.currentTimeMillis());
-        state.obstacle = getRandomPoint();
         state.fruit = getRandomPoint();
 
         gameDrawer = new GameGraphicsDrawer(graphicsDrawer, gridSize);
@@ -104,7 +107,7 @@ public class Game implements Runnable {
             }
 
             if (state.isStarted) {
-                calculateAndUpdateNextEnemyMove(state.snake.getBody(), state.enemySnake.getBody(), state.obstacle, state.fruit);
+                calculateAndUpdateNextEnemyMove(state.snake, state.enemySnake, state.fruit);
             }
             update(state);
             gameDrawer.drawGame(state);
@@ -121,18 +124,13 @@ public class Game implements Runnable {
         }
     }
 
-    public void calculateAndUpdateNextEnemyMove(List<Point> snakeBody, List<Point> enemySnakeBody, Point obstacle, Point fruit) {
+    public void calculateAndUpdateNextEnemyMove(Snake snake, Snake enemySnake, Point fruit) {
         SnakeDirection randomSnakeDirection = getRandomSnakeDirection();
 
+        List<Point> Path = getPath(state.enemySnake.getHead(), state.fruit, Arrays.asList(state.snake, state.enemySnake), x, y);
 
 
-
-
-
-
-
-
-        state.enemySnake.setNextMoveDirection(randomSnakeDirection);
+        state.enemySnake.setNextMoveDirection(SnakeDirection.get(enemySnake.getHead(), Path.get(0)));
     }
 
     private SnakeDirection getRandomSnakeDirection() {
@@ -153,7 +151,7 @@ public class Game implements Runnable {
         return (int) ((Math.random() * (max - min)) + min);
     }
 
-        public void update(GameState state) { // enemy moves first, then player
+    public void update(GameState state) { // enemy moves first, then player
         var nextEnemySnakeHeadPosition = simulateMoveForward(state.enemySnake);
 
         if (state.doesCollideWithAnything(nextEnemySnakeHeadPosition, true, x, y)) {
@@ -188,13 +186,8 @@ public class Game implements Runnable {
 
         if(shouldCreateNewFruitAndObstacle) {
             state.fruit = null;
-            state.obstacle = null;
 
             state.fruit = getRandomPoint();
-            int minimumPointsForObstacleExistence = x * y / 4 * 3;
-            if ((state.score < minimumPointsForObstacleExistence) || (state.enemyScore < minimumPointsForObstacleExistence)) {
-                state.obstacle = getRandomPoint();
-            }
         }
 
         if (state.score == (x * y) - 1) { // TODO why don't we "isOver = true" here?
@@ -223,7 +216,6 @@ public class Game implements Runnable {
             point.y = random.nextInt(y);
         } while (doesCollideWithSnake(point, state.snake)
                 || doesCollideWithSnake(point, state.enemySnake)
-                || (state.obstacle != null && point.equals(state.obstacle))
                 || (state.fruit != null && point.equals(state.fruit)));
 
         return point;

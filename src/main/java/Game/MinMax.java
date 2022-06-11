@@ -27,7 +27,6 @@ public class MinMax {
             for(int j = 0 ; j < possibleEnemySnakeHeadPositions.size() ; j++) {
                 Node childNode = new Node();
                 childNode.fruit = node.fruit;
-                childNode.obstacle = node.obstacle;
 
                 LinkedList<Point> snakeBodyCopy = (LinkedList<Point>)(node.snakeBody.clone());
                 snakeBodyCopy.removeLast();
@@ -65,7 +64,6 @@ public class MinMax {
         Node root = new Node();
         root.snakeBody = state.snake.getBody();
         root.enemySnakeBody = state.enemySnake.getBody();
-        root.obstacle = state.obstacle;
         root.fruit = state.fruit;
 
         tree = new Tree();
@@ -101,9 +99,6 @@ public class MinMax {
        return result;
     }
 
-    public int calculateMaximumOfMinimumsResult() {
-            checkWin(tree.root);
-    }
 
 
     //public boolean checkWin() {

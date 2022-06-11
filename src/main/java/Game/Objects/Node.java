@@ -11,7 +11,6 @@ public class Node {
 
     public LinkedList<Point> snakeBody;
     public LinkedList<Point> enemySnakeBody;
-    public Point obstacle;
     public Point fruit;
 
     // -1 -> enemy loses

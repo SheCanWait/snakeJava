@@ -16,6 +16,23 @@
                 <configuration>
                     <mainClass>Main</mainClass>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>run</id>
+                        <configuration>
+                            <mainClass>Main</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>debug</id>
+                        <configuration>
+                            <mainClass>Main</mainClass>
+                            <options>
+                                <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8082</option>
+                            </options>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>

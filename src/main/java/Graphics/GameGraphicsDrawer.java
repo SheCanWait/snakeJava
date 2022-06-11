@@ -104,11 +104,6 @@ public class GameGraphicsDrawer {
         var fruit = gameState.fruit;
         drawGridCell(GameColors.Fruit, fruit.x, fruit.y);
 
-        var obstacle = gameState.obstacle;
-        if (obstacle != null) {
-            drawGridCell(GameColors.Obstacle, obstacle.x, obstacle.y);
-        }
-
         var snake = gameState.snake;
         drawSnake(gameState, GameColors.Snake, snake, gameState.isOver);
 

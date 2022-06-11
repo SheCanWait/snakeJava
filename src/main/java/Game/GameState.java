@@ -3,15 +3,12 @@ package Game;
 import Game.Objects.Point;
 import Game.Objects.Snake;
 
-import java.util.Random;
-
 
 public class GameState {
 
     public Snake snake;
     public Snake enemySnake;
     public Point fruit;
-    public Point obstacle;
     public int score;
     public int enemyScore;
     public boolean isWin;
@@ -23,7 +20,6 @@ public class GameState {
         snake = new Snake();
         enemySnake = new Snake();
         fruit = new Point();
-        obstacle = new Point();
         score = 0;
         enemyScore = 0;
 
@@ -38,7 +34,6 @@ public class GameState {
         int y_ = nextHeadPosition.y;
 
         return x_ < 0 || y_ < 0 || x_ >= x || y_ >= y // out of border
-                || this.obstacle != null && nextHeadPosition.equals(this.obstacle) // collision with obstacle
                 || simulatedDoesCollideWithSnake(nextHeadPosition, this.snake, calculatingForEnemy)
                 || simulatedDoesCollideWithSnake(nextHeadPosition, this.enemySnake, !calculatingForEnemy); // collision with enemy snake
     }
