@@ -14,11 +14,12 @@ import java.util.List;
 import static Game.Objects.SnakeDirection.*;
 
 public class MinMax {
-    Tree tree;
     int x;
     int y;
+    public static final int MAX_GAME_DEPTH = 16^3;
+    public static int gameDepth = 0;
 
-    static List<Node> calculateChildNodes(Node node) {
+    private static List<Node> calculateChildNodes(Node node) {
         List<Point> possibleSnakeHeadPositions = calculatePossibleSnakePositions(node.snakeBody);
         List<Point> possibleEnemySnakeHeadPositions = calculatePossibleSnakePositions(node.enemySnakeBody);
 
@@ -58,7 +59,7 @@ public class MinMax {
         return snakePossibleNextHeadPositions;
     }
 
-    public void constructTree(GameState state, int x, int y) {
+    public Node constructTree(GameState state, int x, int y) {
         this.x = x;
         this.y = y;
         Node root = new Node();
@@ -66,21 +67,22 @@ public class MinMax {
         root.enemySnakeBody = state.enemySnake.getBody();
         root.fruit = state.fruit;
 
-        tree = new Tree();
-        tree.root = root;
         constructTree(root);
+        return root;
     }
 
     private void constructTree(Node parentNode) {
         List<Node> childNodes = calculateChildNodes(parentNode);
-
-        childNodes.forEach(childNode -> {
-            parentNode.childNodes.add(childNode);
-            int gameOver = isGameOver(childNode);
-            if(gameOver == 0) {
-                constructTree(childNode);
-            }
-        });
+        gameDepth++;
+        if(gameDepth < MAX_GAME_DEPTH) {
+            childNodes.forEach(childNode -> {
+                parentNode.childNodes.add(childNode);
+                int gameOver = isGameOver(childNode);
+                if(gameOver == 0) {
+                    constructTree(childNode);
+                }
+            });
+        }
     }
 
     // -1 -> enemy loses

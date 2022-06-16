@@ -1,5 +1,6 @@
 package Game;
 
+import Game.Objects.Node;
 import Game.Objects.Point;
 import Game.Objects.Snake;
 import Game.Objects.SnakeDirection;
@@ -8,10 +9,9 @@ import Graphics.GraphicsDrawer;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.util.Pair;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static Game.Algorithms.PathFinder.getPath;
 
@@ -107,7 +107,7 @@ public class Game implements Runnable {
             }
 
             if (state.isStarted) {
-                calculateAndUpdateNextEnemyMove(state.snake, state.enemySnake, state.fruit);
+                calculateAndUpdateNextEnemyMove(state.enemySnake);
             }
             update(state);
             gameDrawer.drawGame(state);
@@ -124,31 +124,42 @@ public class Game implements Runnable {
         }
     }
 
-    public void calculateAndUpdateNextEnemyMove(Snake snake, Snake enemySnake, Point fruit) {
-        SnakeDirection randomSnakeDirection = getRandomSnakeDirection();
+    public void calculateAndUpdateNextEnemyMove(Snake enemySnake) {
+        MinMax minMax = new MinMax();
+        Node root = minMax.constructTree(state, x, y);
+
+        Map<Node, Integer> childrenFromTreeRootToTheirMinMaxValue = new HashMap<>();
+        for(Node childFromTreeRoot : root.childNodes) {
+            int minMaxValueFromNode = getMinMaxValueFromNode(childFromTreeRoot, -1);
+            childrenFromTreeRootToTheirMinMaxValue.put(childFromTreeRoot, minMaxValueFromNode);
+        }
+
+        Pair<Node, Integer> bestMinMaxPair = new Pair<>();
+        for (Map.Entry<Node, Integer> entry : childrenFromTreeRootToTheirMinMaxValue.entrySet()) {
+            System.out.println(entry.getKey() + "/" + entry.getValue());
+        }
 
         List<Point> Path = getPath(state.enemySnake.getHead(), state.fruit, Arrays.asList(state.snake, state.enemySnake), x, y);
-
-
         state.enemySnake.setNextMoveDirection(SnakeDirection.get(enemySnake.getHead(), Path.get(0)));
     }
 
-    private SnakeDirection getRandomSnakeDirection() {
-        int randomNumber = getRandomNumber(1, 5);
-        switch (randomNumber) {
-            case 2:
-                return SnakeDirection.Top;
-            case 3:
-                return SnakeDirection.Left;
-            case 4:
-                return SnakeDirection.Right;
-            default:
-                return SnakeDirection.Down;
+    // -1 -> enemy loses
+    // 0 -> game not ended
+    // 1 -> enemy wins
+    private int getMinMaxValueFromNode(Node node, int currentMinMaxValue) {
+        if(currentMinMaxValue == 1) {
+            return currentMinMaxValue;
         }
-    }
-
-    private int getRandomNumber(int min, int max) {
-        return (int) ((Math.random() * (max - min)) + min);
+        for(Node child : node.childNodes) {
+            if(child.childNodes.size() > 0) {
+                getMinMaxValueFromNode(child, currentMinMaxValue)
+            } else {
+                if(child.gameResult > currentMinMaxValue) {
+                    currentMinMaxValue = child.gameResult;
+                }
+            }
+        }
+        return currentMinMaxValue;
     }
 
     public void update(GameState state) { // enemy moves first, then player
@@ -230,9 +241,5 @@ public class Game implements Runnable {
         }
 
         return false;
-    }
-
-    public Scene getScene() {
-        return gameDrawer.getScene();
     }
 }
