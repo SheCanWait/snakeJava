@@ -126,7 +126,7 @@ public class Game implements Runnable {
 
     public void calculateAndUpdateNextEnemyMove(Snake enemySnake) {
         MinMax minMax = new MinMax();
-        Node root = minMax.constructTree(state, x, y);
+        Node root = minMax.constructTree(state, x, y, 2);
 
         Map<Node, Integer> childrenFromTreeRootToTheirMinMaxValue = new HashMap<>();
         for(Node childFromTreeRoot : root.childNodes) {
@@ -143,9 +143,11 @@ public class Game implements Runnable {
         state.enemySnake.setNextMoveDirection(SnakeDirection.get(enemySnake.getHead(), Path.get(0)));
     }
 
-    // -1 -> enemy loses
+    // Integer.MIN_VALUE -> we win
+    // -1 -> we get fruit
     // 0 -> game not ended
-    // 1 -> enemy wins
+    // 1 -> AI gets fruit
+    // Integer.MAX_VALUE -> AI wins
     private int getMinMaxValueFromNode(Node node, int currentMinMaxValue) {
         if(currentMinMaxValue == 1) {
             return currentMinMaxValue;

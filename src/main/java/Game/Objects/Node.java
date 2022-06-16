@@ -2,12 +2,13 @@ package Game.Objects;
 
 import Game.GameState;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class Node {
 
-    public List<Node> childNodes;
+    public List<Node> childNodes = new ArrayList<>();
 
     public LinkedList<Point> snakeBody;
     public LinkedList<Point> enemySnakeBody;
