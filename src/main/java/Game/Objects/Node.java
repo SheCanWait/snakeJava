@@ -19,4 +19,12 @@ public class Node {
     // 1 -> enemy wins
     public int gameResult;
 
+    @Override
+    public String toString() {
+        return "snake: " + snakeBody + "\n" +
+                "enemy snake: " + enemySnakeBody + "\n" +
+                "fruit: " + fruit + "\n" +
+                "game result: " + gameResult + "\n\n";
+    }
+
 }

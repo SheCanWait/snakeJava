@@ -3,6 +3,8 @@ package Game;
 import Game.Objects.Point;
 import Game.Objects.Snake;
 
+import java.util.LinkedList;
+
 
 public class GameState {
 
@@ -28,21 +30,21 @@ public class GameState {
         isStarted = false;
     }
 
-    public boolean doesCollideWithAnything(Point nextHeadPosition, boolean calculatingForEnemy, int x, int y) {
+    public static boolean doesCollideWithAnything(Point nextHeadPosition, LinkedList<Point> snakeBody, LinkedList<Point> enemySnakeBody, boolean calculatingForEnemy, int x, int y) {
 
         int x_ = nextHeadPosition.x;
         int y_ = nextHeadPosition.y;
 
         return x_ < 0 || y_ < 0 || x_ >= x || y_ >= y // out of border
-                || simulatedDoesCollideWithSnake(nextHeadPosition, this.snake, calculatingForEnemy)
-                || simulatedDoesCollideWithSnake(nextHeadPosition, this.enemySnake, !calculatingForEnemy); // collision with enemy snake
+                || simulatedDoesCollideWithSnake(nextHeadPosition, snakeBody, calculatingForEnemy)
+                || simulatedDoesCollideWithSnake(nextHeadPosition, enemySnakeBody, !calculatingForEnemy); // collision with enemy snake
     }
 
-    private boolean simulatedDoesCollideWithSnake(Point nextHeadPosition, Snake snake, boolean calculatingVsEnemy) {
+    private static boolean simulatedDoesCollideWithSnake(Point nextHeadPosition, LinkedList<Point> snakeBody, boolean calculatingVsEnemy) {
 
         if(calculatingVsEnemy) {
 
-            for (var snakePart: snake.getBody()) {
+            for (var snakePart: snakeBody) {
                 if (snakePart.equals(nextHeadPosition)) {
                     return true;
                 }
@@ -51,9 +53,9 @@ public class GameState {
 
         } else {
 
-            var lastBodyPart = snake.getBody().getLast();
+            var lastBodyPart = snakeBody.getLast();
 
-            for (var snakePart: snake.getBody()) {
+            for (var snakePart: snakeBody) {
                 if (snakePart != lastBodyPart && snakePart.equals(nextHeadPosition)) {
                     return true;
                 }

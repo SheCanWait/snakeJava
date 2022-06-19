@@ -2,16 +2,11 @@ package Game;
 
 import Game.Objects.Node;
 import Game.Objects.Point;
-import Game.Objects.SnakeDirection;
-import Game.Objects.Tree;
-import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-
-import static Game.Objects.SnakeDirection.*;
 
 public class MinMax {
     int x;
@@ -30,12 +25,16 @@ public class MinMax {
                 childNode.fruit = node.fruit;
 
                 LinkedList<Point> snakeBodyCopy = (LinkedList<Point>)(node.snakeBody.clone());
-                snakeBodyCopy.removeLast();
+                if(!possibleSnakeHeadPositions.get(i).equals(childNode.fruit)) {
+                    snakeBodyCopy.removeLast();
+                }
                 snakeBodyCopy.addFirst(possibleSnakeHeadPositions.get(i));
                 childNode.snakeBody = snakeBodyCopy;
 
                 LinkedList<Point> enemySnakeBodyCopy = (LinkedList<Point>)(node.enemySnakeBody.clone());
-                enemySnakeBodyCopy.removeLast();
+                if(!possibleEnemySnakeHeadPositions.get(j).equals(childNode.fruit)) {
+                    enemySnakeBodyCopy.removeLast();
+                }
                 enemySnakeBodyCopy.addFirst(possibleEnemySnakeHeadPositions.get(j));
                 childNode.enemySnakeBody = enemySnakeBodyCopy;
 
@@ -47,11 +46,11 @@ public class MinMax {
 
     private static List<Point> calculatePossibleSnakePositions(LinkedList<Point> snakeBody) {
         Point snakeHead = snakeBody.getFirst();
-        List<Point> snakePossibleNextHeadPositions = Arrays.asList(
+        List<Point> snakePossibleNextHeadPositions = new LinkedList<>(Arrays.asList(
                 new Point(snakeHead.x + 1, snakeHead.y),
                 new Point(snakeHead.x - 1, snakeHead.y),
                 new Point(snakeHead.x, snakeHead.y + 1),
-                new Point(snakeHead.x, snakeHead.y - 1));
+                new Point(snakeHead.x, snakeHead.y - 1)));
         if(snakeBody.size() > 1) {
             Point secondSnakeElement = snakeBody.get(1);
             snakePossibleNextHeadPositions.remove(secondSnakeElement);
@@ -77,10 +76,11 @@ public class MinMax {
 
             parentNode.childNodes.addAll(childNodes);
 
-            childNodes.forEach(childNode -> {
-                parentNode.childNodes.add(childNode);
-                int gameOver = isGameOver(childNode);
-                if(gameOver == 0) {
+            parentNode.childNodes.forEach(childNode -> {
+//                parentNode.childNodes.add(childNode);
+                int simulatedGameResult = simulateGameResult(childNode);
+                childNode.gameResult = simulatedGameResult;
+                if(simulatedGameResult == 0 || simulatedGameResult == -1 || simulatedGameResult == 1) {
                     constructTree(childNode, minMaxDepth, currentDepth + 1);
                 }
             });
@@ -90,39 +90,26 @@ public class MinMax {
     // -1 -> enemy loses
     // 0 -> game not ended
     // 1 -> enemy wins
-    private int isGameOver(Node node) {
-       int result = 0;
-       GameState state = new GameState();
-       if(state.doesCollideWithAnything(node.snakeBody.getFirst(), false, x, y)) { // TODO idk if true / false should be inverted here
-           result = 1;
-       }
-       if(state.doesCollideWithAnything(node.enemySnakeBody.getFirst(), true, x, y)) {
-           result = -1;
-       }
 
-       return result;
+    // Integer.MIN_VALUE -> we win
+    // -1 -> we get fruit
+    // 0 -> game not ended
+    // 1 -> AI gets fruit
+    // Integer.MAX_VALUE -> AI wins
+    private int simulateGameResult(Node node) {
+        if(node.snakeBody.getFirst().equals(node.fruit)) {
+            return -1;
+        }
+        if(node.enemySnakeBody.getFirst().equals(node.fruit)) {
+            return 1;
+        }
+        if(GameState.doesCollideWithAnything(node.snakeBody.getFirst(), node.snakeBody, node.enemySnakeBody, false, x, y)) { // TODO idk if true / false should be inverted here
+            return Integer.MAX_VALUE;
+        }
+        if(GameState.doesCollideWithAnything(node.enemySnakeBody.getFirst(), node.snakeBody, node.enemySnakeBody,true, x, y)) {
+            return Integer.MIN_VALUE;
+        }
+        return 0;
     }
-
-
-
-    //public boolean checkWin() {
-    //    Node root = tree.getRoot();
-    //    checkWin(root);
-    //    return root.getScore() == 1;
-    //}
-    //
-    //private void checkWin(Node node) {
-    //    List<Node> children = node.getChildren();
-    //    boolean isMaxPlayer = node.isMaxPlayer();
-    //    children.forEach(child -> {
-    //        if (child.getNoOfBones() == 0) {
-    //            child.setScore(isMaxPlayer ? 1 : -1);
-    //        } else {
-    //            checkWin(child);
-    //        }
-    //    });
-    //    Node bestChild = findBestChild(isMaxPlayer, children);
-    //    node.setScore(bestChild.getScore());
-    //}
 
 }

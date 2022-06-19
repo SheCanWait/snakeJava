@@ -126,18 +126,7 @@ public class Game implements Runnable {
 
     public void calculateAndUpdateNextEnemyMove(Snake enemySnake) {
         MinMax minMax = new MinMax();
-        Node root = minMax.constructTree(state, x, y, 2);
-
-        Map<Node, Integer> childrenFromTreeRootToTheirMinMaxValue = new HashMap<>();
-        for(Node childFromTreeRoot : root.childNodes) {
-            int minMaxValueFromNode = getMinMaxValueFromNode(childFromTreeRoot, -1);
-            childrenFromTreeRootToTheirMinMaxValue.put(childFromTreeRoot, minMaxValueFromNode);
-        }
-
-        Pair<Node, Integer> bestMinMaxPair = new Pair<>();
-        for (Map.Entry<Node, Integer> entry : childrenFromTreeRootToTheirMinMaxValue.entrySet()) {
-            System.out.println(entry.getKey() + "/" + entry.getValue());
-        }
+        Node root = minMax.constructTree(state, x, y, 4);
 
         List<Point> Path = getPath(state.enemySnake.getHead(), state.fruit, Arrays.asList(state.snake, state.enemySnake), x, y);
         state.enemySnake.setNextMoveDirection(SnakeDirection.get(enemySnake.getHead(), Path.get(0)));
@@ -154,7 +143,7 @@ public class Game implements Runnable {
         }
         for(Node child : node.childNodes) {
             if(child.childNodes.size() > 0) {
-                getMinMaxValueFromNode(child, currentMinMaxValue)
+                getMinMaxValueFromNode(child, currentMinMaxValue);
             } else {
                 if(child.gameResult > currentMinMaxValue) {
                     currentMinMaxValue = child.gameResult;
@@ -167,7 +156,7 @@ public class Game implements Runnable {
     public void update(GameState state) { // enemy moves first, then player
         var nextEnemySnakeHeadPosition = simulateMoveForward(state.enemySnake);
 
-        if (state.doesCollideWithAnything(nextEnemySnakeHeadPosition, true, x, y)) {
+        if (state.doesCollideWithAnything(nextEnemySnakeHeadPosition, state.snake.getBody(), state.enemySnake.getBody(), true, x, y)) {
             state.isOver = true;
             state.isWin = true;
         }
@@ -183,7 +172,7 @@ public class Game implements Runnable {
         }
 
         var nextSnakeHeadPosition = simulateMoveForward(state.snake);
-        if (state.doesCollideWithAnything(nextSnakeHeadPosition, false, x, y)) {
+        if (state.doesCollideWithAnything(nextSnakeHeadPosition, state.snake.getBody(), state.enemySnake.getBody(), false, x, y)) {
             state.isOver = true;
             state.isWin = false;
         }
