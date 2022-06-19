@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MinMax {
     int x;
@@ -14,7 +15,7 @@ public class MinMax {
 //    public static final int MAX_GAME_DEPTH = 16^3;
 //    public static int gameDepth = 0;
 
-    private static List<Node> calculateChildNodes(Node node) {
+    private List<Node> calculateChildNodes(Node node) {
         List<Point> possibleSnakeHeadPositions = calculatePossibleSnakePositions(node.snakeBody);
         List<Point> possibleEnemySnakeHeadPositions = calculatePossibleSnakePositions(node.enemySnakeBody);
 
@@ -44,7 +45,7 @@ public class MinMax {
         return childNodes;
     }
 
-    private static List<Point> calculatePossibleSnakePositions(LinkedList<Point> snakeBody) {
+    private List<Point> calculatePossibleSnakePositions(LinkedList<Point> snakeBody) {
         Point snakeHead = snakeBody.getFirst();
         List<Point> snakePossibleNextHeadPositions = new LinkedList<>(Arrays.asList(
                 new Point(snakeHead.x + 1, snakeHead.y),
@@ -55,6 +56,13 @@ public class MinMax {
             Point secondSnakeElement = snakeBody.get(1);
             snakePossibleNextHeadPositions.remove(secondSnakeElement);
         }
+
+        snakePossibleNextHeadPositions.removeIf(point ->
+                point.x < 0 ||
+                point.y < 0 ||
+                point.x >= this.x ||
+                point.y >= this.y);
+
         return snakePossibleNextHeadPositions;
     }
 
@@ -73,12 +81,15 @@ public class MinMax {
     private void constructTree(Node parentNode, int minMaxDepth, int currentDepth) {
         if (currentDepth < minMaxDepth) {
             List<Node> childNodes = calculateChildNodes(parentNode);
-
             parentNode.childNodes.addAll(childNodes);
 
             parentNode.childNodes.forEach(childNode -> {
-//                parentNode.childNodes.add(childNode);
                 int simulatedGameResult = simulateGameResult(childNode);
+
+                if (simulatedGameResult == Integer.MAX_VALUE) {
+                    simulateGameResult(childNode);
+                }
+
                 childNode.gameResult = simulatedGameResult;
                 if(simulatedGameResult == 0 || simulatedGameResult == -1 || simulatedGameResult == 1) {
                     constructTree(childNode, minMaxDepth, currentDepth + 1);
@@ -103,10 +114,10 @@ public class MinMax {
         if(node.enemySnakeBody.getFirst().equals(node.fruit)) {
             return 1;
         }
-        if(GameState.doesCollideWithAnything(node.snakeBody.getFirst(), node.snakeBody, node.enemySnakeBody, false, x, y)) { // TODO idk if true / false should be inverted here
+        if(GameState.doesCollideWithAnything(node.snakeBody.getFirst(), node.snakeBody.stream().skip(1).collect(Collectors.toList()), node.enemySnakeBody, false, x, y)) { // TODO idk if true / false should be inverted here
             return Integer.MAX_VALUE;
         }
-        if(GameState.doesCollideWithAnything(node.enemySnakeBody.getFirst(), node.snakeBody, node.enemySnakeBody,true, x, y)) {
+        if(GameState.doesCollideWithAnything(node.enemySnakeBody.getFirst(), node.snakeBody.stream().skip(1).collect(Collectors.toList()), node.enemySnakeBody,true, x, y)) {
             return Integer.MIN_VALUE;
         }
         return 0;

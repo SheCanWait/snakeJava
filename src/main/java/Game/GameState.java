@@ -4,6 +4,7 @@ import Game.Objects.Point;
 import Game.Objects.Snake;
 
 import java.util.LinkedList;
+import java.util.List;
 
 
 public class GameState {
@@ -30,7 +31,7 @@ public class GameState {
         isStarted = false;
     }
 
-    public static boolean doesCollideWithAnything(Point nextHeadPosition, LinkedList<Point> snakeBody, LinkedList<Point> enemySnakeBody, boolean calculatingForEnemy, int x, int y) {
+    public static boolean doesCollideWithAnything(Point nextHeadPosition, List<Point> snakeBody, List<Point> enemySnakeBody, boolean calculatingForEnemy, int x, int y) {
 
         int x_ = nextHeadPosition.x;
         int y_ = nextHeadPosition.y;
@@ -40,9 +41,10 @@ public class GameState {
                 || simulatedDoesCollideWithSnake(nextHeadPosition, enemySnakeBody, !calculatingForEnemy); // collision with enemy snake
     }
 
-    private static boolean simulatedDoesCollideWithSnake(Point nextHeadPosition, LinkedList<Point> snakeBody, boolean calculatingVsEnemy) {
+    private static boolean simulatedDoesCollideWithSnake(Point nextHeadPosition, List<Point> snakeBody, boolean calculatingVsEnemy) {
 
         if(calculatingVsEnemy) {
+            if (snakeBody.size() == 0) return false;
 
             for (var snakePart: snakeBody) {
                 if (snakePart.equals(nextHeadPosition)) {
@@ -52,11 +54,12 @@ public class GameState {
             return false;
 
         } else {
+            if (snakeBody.size() == 0) return false;
 
-            var lastBodyPart = snakeBody.getLast();
+            var lastBodyPart = snakeBody.get(snakeBody.size() - 1);
 
             for (var snakePart: snakeBody) {
-                if (snakePart != lastBodyPart && snakePart.equals(nextHeadPosition)) {
+                if (!snakePart.equals(lastBodyPart) && snakePart.equals(nextHeadPosition)) {
                     return true;
                 }
             }

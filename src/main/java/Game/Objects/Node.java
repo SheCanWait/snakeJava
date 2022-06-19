@@ -18,6 +18,7 @@ public class Node {
     // 0 -> game not ended
     // 1 -> enemy wins
     public int gameResult;
+    public Point bestMove;
 
     @Override
     public String toString() {
